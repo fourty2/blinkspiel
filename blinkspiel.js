@@ -4,6 +4,13 @@
 		READYPLAYERONE: 1
 	};
 
+	var tileStates = {
+		INACTIVE: 0,
+		SELECTED: 1,
+		SELECTABLE: 2,
+		ACTIVE: 3,
+	};
+
 	var colors = [
 		new THREE.Color(1,0,0),
 		new THREE.Color(0,1,0),
@@ -17,6 +24,7 @@
 		gameState: gameStates.WAITINGFORDEVICE,
 		raycaster: new THREE.Raycaster(),
 		mouseVector: new THREE.Vector2(),
+		playerPosition: new THREE.Vector2(),
 		init: function() {
 
 			var WIDTH = window.innerWidth;
@@ -67,10 +75,11 @@
 						x: x,
 						y: y,						
 						color: color,
-						mesh: mesh
+						mesh: mesh,
+						state: tileStates.INACTIVE
 					}
 					);
-					mesh.material.color = color.clone();
+					mesh.material.color = this.getInactive(color.clone());
 					mesh.tileIndex = (this.tiles.length - 1);
 					this.scene.add(mesh);
 				}
@@ -83,12 +92,24 @@
 			var mesh = new THREE.Mesh(test, material);
 			this.scene.add(mesh);
 			*/
+
+			this.player = new THREE.Mesh(
+					new THREE.SphereGeometry(5,5,8),
+					new THREE.MeshBasicMaterial({color:0x00ff00})
+				);
+			this.playerPosition.x = 0;
+			this.playerPosition.y = 0;
+			this.movePlayer();
+
+			this.scene.add(this.player);
+
 			this.camera.lookAt(new THREE.Vector3(0,0,0));
 
 
 			this.animate();
 
 			window.addEventListener( 'mousemove', Blinkspiel.onMouseMove, false );
+			window.addEventListener( 'click', Blinkspiel.onMouseClick, false );
 			chrome.hid.getDevices({}, Blinkspiel.onDevicesEnumerated);
 			if (chrome.hid.onDeviceAdded) {
 				chrome.hid.onDeviceAdded.addListener(Blinkspiel.onDeviceAdded);
@@ -97,6 +118,84 @@
 				chrome.hid.onDeviceRemoved.addListener(Blinkspiel.onDeviceRemoved);
 			}
 		},
+		getInactive: function(color) {
+			color.r = 0.1 * color.r;
+			color.g = 0.1 * color.g;
+			color.b = 0.1 * color.b;
+			return color;
+		},
+		getSelectable: function(color) {
+			color.r = 0.6 * color.r;
+			color.g = 0.6 * color.g;
+			color.b = 0.6 * color.b;
+			return color;
+		},
+		movePlayer: function() {
+			var centeroffset = 25;
+			this.player.position.set((this.playerPosition.x * 12) - centeroffset,0, (this.playerPosition.y * 12) - centeroffset );
+
+			// nun die tilestates ändern
+			for (var tile of this.tiles) {
+				if (tile.state == tileStates.SELECTABLE) {
+					tile.state = tileStates.INACTIVE;
+				}
+			}
+
+			var x = this.playerPosition.x;
+			var y = this.playerPosition.y;
+
+			if (x < 5) { this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE; };
+			if (x > 0) { this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE; };
+			if (y < 5) { this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE; };
+			if (y > 0) { this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE; };
+
+			this.updateTileStates();
+
+		},
+		updateTileStates: function() {
+			for (var tile of this.tiles) {
+				switch (tile.state) {
+					case tileStates.SELECTABLE:
+						
+						//tile.mesh.material.color.set(tile.color.clone());	
+						tile.mesh.material.color.set(this.getSelectable(tile.color.clone()));	
+						break;
+					case tileStates.INACTIVE:
+						tile.mesh.material.color.set(this.getInactive(tile.color.clone()));	
+						break;
+					case tileStates.SELECTED:
+						tile.mesh.material.color.set(tile.color.clone());	
+				}
+				tile.mesh.scale.y = 1;
+			}
+		},
+		onMouseClick: function(e) {
+			
+			that = Blinkspiel;
+			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+			that.mouseVector.y = - ( e.clientY / window.innerHeight) * 2 + 1;
+
+			that.raycaster.setFromCamera( that.mouseVector, that.camera );	
+			var intersects = that.raycaster.intersectObjects( that.scene.children );
+			for ( var i = 0; i < intersects.length; i++ ) {		
+				var tile = that.tiles[intersects[i].object.tileIndex];
+				if (that.gameState == gameStates.READYPLAYERONE && tile.state == tileStates.SELECTABLE) {
+					
+					tile.state = tileStates.SELECTED;
+					that.playerPosition.x = tile.x;
+					that.playerPosition.y = tile.y;
+					that.movePlayer();
+					//bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
+					//console.log(intersects[i].object.tileIndex);
+				}
+
+				intersects[ i ].object.material.color.set( tile.color);
+				intersects[ i ].object.scale.y = 2;
+			}
+			
+
+			console.log(e);
+		},
 		onMouseMove: function(e) {
 			that = Blinkspiel;
 			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -104,23 +203,31 @@
 
 			that.raycaster.setFromCamera( that.mouseVector, that.camera );	
 
-			for (var tile of that.tiles) {
-				tile.mesh.material.color.set(tile.color);
-				tile.mesh.scale.y = 1;
-			}
+			
+			that.updateTileStates();
+			/*for (var tile of that.tiles) {
+				if (tile.state == tileStates.INACTIVE) {
+					tile.mesh.material.color.set(that.getInactive(tile.color.clone()));	
+				} else {
+					tile.mesh.material.color.set(tile.color);	
+				}
 
+				
+				tile.mesh.scale.y = 1;
+			}	*/
+			
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
 			for ( var i = 0; i < intersects.length; i++ ) {		
-				if (that.gameState == gameStates.READYPLAYERONE) {
-					var tile = that.tiles[intersects[i].object.tileIndex];
+				var tile = that.tiles[intersects[i].object.tileIndex];
 
+				if (that.gameState == gameStates.READYPLAYERONE && tile.state == tileStates.SELECTABLE) {
 					
 					bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
 					//console.log(intersects[i].object.tileIndex);
+					intersects[ i ].object.material.color.set( tile.color );
+					intersects[ i ].object.scale.y = 2;
 				}
 
-				//intersects[ i ].object.material.color.set( 0xff0000 );
-				intersects[ i ].object.scale.y = 2;
 			}
 
 		},
