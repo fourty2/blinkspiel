@@ -1,7 +1,8 @@
 (function() {
 	var gameStates = {
 		WAITINGFORDEVICE: 0,
-		READYPLAYERONE: 1
+		READYPLAYERONE: 1,
+		PLAY: 2
 	};
 
 	var tileStates = {
@@ -58,6 +59,71 @@
 			var tileGeometry = new THREE.BoxGeometry(10,1,10);
 			
 			var centeroffset = 25;
+			this.currentPath = [];
+			var checkOldPos = function(pos) {
+				for (pathPos of Blinkspiel.currentPath) {
+					if (pathPos.position.x == pos.x && pathPos.position.y == pos.y) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			// weg erstellen
+			var currentPos = new THREE.Vector2(2,2);
+			this.currentPath.push({
+					'position': currentPos,
+					'color': colors[Math.floor(Math.random() * (colors.length))].clone()
+					});
+
+			var possiblePos = new THREE.Vector2();
+			console.log("generating path");
+			for (var i= 0; i<8; i++) {
+				var iterations = 0;
+				do {
+					iterations++;
+					var direction = Math.floor(Math.random() * 4);				
+					possiblePos = currentPos.clone();
+					switch (direction) {
+						case 0:
+							possiblePos.x++;
+						break;
+						case 1:
+							possiblePos.x--;
+						break;
+						case 2:
+							possiblePos.y++;
+						break;
+						case 3:
+							possiblePos.y--;
+						break;
+					}
+			
+				} while (
+					possiblePos.x < 0 || possiblePos.x > 4 || 
+					possiblePos.y < 0 || possiblePos.y > 4 || 
+					( possiblePos.x == currentPos.x && possiblePos.y == currentPos.y ) || 
+					(checkOldPos(possiblePos)) || 
+					iterations > 10
+				)
+				
+				if (iterations > 10) {
+					console.log ("neu generieren");
+				}
+
+				currentPos = possiblePos.clone();
+
+				this.currentPath.push({
+					'position': currentPos.clone(),
+					'color': colors[Math.floor(Math.random() * (colors.length))].clone()
+					});
+			}			
+
+
+			console.log(this.currentPath);
+
+
 			//this.tileObjects = new THREE.Object3D();
 			for (var x = 0; x<5; x++) {
 				for (var y = 0; y<5; y++) {
@@ -67,24 +133,35 @@
 
 					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
 
+
+					var color = colors[Math.floor(Math.random() * (colors.length))].clone();					
+					var state = tileStates.INACTIVE;
+					// schauen obs, im pfad ist
+					for (var pathPos of this.currentPath) {
+						if (pathPos.position.x == x && pathPos.position.y == y) {
+							color = pathPos.color.clone();
+							//state = tileStates.ACTIVE;
+						}
+					}
+
 					// select color random from list
-					var color = colors[Math.floor(Math.random() * (colors.length))].clone();
-					console.log(colors);
+					
 					this.tiles.push(
 					{
 						x: x,
 						y: y,						
 						color: color,
 						mesh: mesh,
-						state: tileStates.INACTIVE
+						state: state
 					}
 					);
 					mesh.material.color = this.getInactive(color.clone());
 					mesh.tileIndex = (this.tiles.length - 1);
 					this.scene.add(mesh);
 				}
-
 			}
+			this.updateTileStates();
+
 		//	this.scene.add(this.tileObjects);
 
 		/*	var test = new THREE.SphereGeometry(10,10, 32);
@@ -97,8 +174,8 @@
 					new THREE.SphereGeometry(5,5,8),
 					new THREE.MeshBasicMaterial({color:0x00ff00})
 				);
-			this.playerPosition.x = 0;
-			this.playerPosition.y = 0;
+			this.playerPosition.x = 2;
+			this.playerPosition.y = 2;
 			this.movePlayer();
 
 			this.scene.add(this.player);
@@ -125,9 +202,9 @@
 			return color;
 		},
 		getSelectable: function(color) {
-			color.r = 0.6 * color.r;
-			color.g = 0.6 * color.g;
-			color.b = 0.6 * color.b;
+			color.r = 0.1 * color.r;
+			color.g = 0.1 * color.g;
+			color.b = 0.1 * color.b;
 			return color;
 		},
 		movePlayer: function() {
@@ -165,13 +242,21 @@
 						break;
 					case tileStates.SELECTED:
 						tile.mesh.material.color.set(tile.color.clone());	
+						break;
+					case tileStates.ACTIVE:
+						tile.mesh.material.color.set(tile.color.clone());	
 				}
 				tile.mesh.scale.y = 1;
 			}
 		},
 		onMouseClick: function(e) {
 			
+
 			that = Blinkspiel;
+			if (that.gameState == gameStates.READYPLAYERONE) {
+				that.setGameState(gameStates.PLAY);
+
+			}
 			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
 			that.mouseVector.y = - ( e.clientY / window.innerHeight) * 2 + 1;
 
@@ -260,19 +345,49 @@
 		onDeviceRemoved: function(device) {
 			console.log("removed");
 			console.log(device);
-		},
+		},	
 		setGameState: function(state) {
 			console.log("setting game state");
 			this.gameState = state;
 			switch (this.gameState) {
 				case gameStates.READYPLAYERONE:
 				//bg.blink1.fadeRgb(60, 128, 200, 2500, 0);
-				bg.blink1.fadeRgb(0, 0, 0, 2500, 0);
+				bg.blink1.fadeRgb(0, 0, 0, 250, 0);
+				break;
+				case gameStates.PLAY:
+				console.log("play");
+				this.patternTime =  new Date();
+				this.currentDelta = -1;
 				break;
 			}
 		},
+		playPattern: function() {
+			var actualTime = new Date();
+			var delta = Math.floor((actualTime - Blinkspiel.patternTime) / 1000);
+			if (delta < Blinkspiel.currentPath.length * 2 && Blinkspiel.currentDelta != delta) {
+				console.log("set led");
+			 	
+
+				if (delta % 2 == 0) {
+					var color = Blinkspiel.currentPath[delta / 2].color;	
+				 	bg.blink1.fadeRgb(color.r * 255, color.g * 255, color.b * 255, 150, 0);
+				} else {
+					console.log("black");
+				 	bg.blink1.fadeRgb(0,0,0, 600, 0);
+				
+				}
+
+
+			 	console.log(color);
+
+			 	Blinkspiel.currentDelta = delta;
+			}			
+		},
 		render: function() {
-		
+			if (Blinkspiel.gameState == gameStates.PLAY) {
+				Blinkspiel.playPattern();
+			}
+			
 
 			Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
 		},
