@@ -31,14 +31,49 @@
 			this.scene = new THREE.Scene();
 
 			this.camera = new THREE.PerspectiveCamera(FOV, WIDTH/ HEIGHT, NEAR, FAR);
-			this.camera.position.set(0,50,0);
+			this.camera.position.set(0,80,80);
 			this.scene.add(this.camera);
 
-			var test = new THREE.SphereGeometry(10,10, 32);
+
+			// matrix von 5x5 planes erstellen
+			this.tiles = [];
+			var tileGeometry = new THREE.BoxGeometry(10,1,10);
+			var centeroffset = 25;
+			for (var x = 0; x<5; x++) {
+				for (var y = 0; y<5; y++) {
+
+					var mat = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});
+					var mesh = new THREE.Mesh(tileGeometry, mat);
+					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
+
+					this.tiles.push(
+					{
+						x: x,
+						y: y,
+						color: 0x00ff00,
+						mesh: mesh
+					}
+					);
+
+					this.scene.add(mesh);
+				}
+
+			}
+
+
+			/*var planegeo = new THREE.PlaneGeometry(30,30, 32);
+			var material2 = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});
+			var mesh2 = new THREE.Mesh(planegeo, material2);
+			this.scene.add(mesh2);
+			*/
+
+
+		/*	var test = new THREE.SphereGeometry(10,10, 32);
 			var material = new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide});
 			var mesh = new THREE.Mesh(test, material);
 			this.scene.add(mesh);
-			this.camera.lookAt(mesh.position);
+			*/
+			this.camera.lookAt(new THREE.Vector3(0,0,0));
 
 
 			this.animate();
