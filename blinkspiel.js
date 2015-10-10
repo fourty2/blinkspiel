@@ -50,15 +50,17 @@
 					var mesh = new THREE.Mesh(tileGeometry, mat);
 					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
 
+					var color = [Math.random(), Math.random(), Math.random()];
 					this.tiles.push(
 					{
 						x: x,
 						y: y,
-						color: 0x00ff00,
+						colorArray: color,
+						color: new THREE.Color(color[0], color[1], color[2]),
 						mesh: mesh
 					}
 					);
-
+					mesh.tileIndex = (this.tiles.length - 1);
 					this.scene.add(mesh);
 				}
 
@@ -85,8 +87,28 @@
 			}
 		},
 		onMouseMove: function(e) {
-			Blinkspiel.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
-			Blinkspiel.mouseVector.y = - ( e.clientY / window.innerHeight) * 2 + 1;
+			that = Blinkspiel;
+			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+			that.mouseVector.y = - ( e.clientY / window.innerHeight) * 2 + 1;
+
+			that.raycaster.setFromCamera( that.mouseVector, that.camera );	
+
+			for (var tile of that.tiles) {
+				tile.mesh.material.color.set(tile.color);
+			}
+
+			var intersects = that.raycaster.intersectObjects( that.scene.children );
+			for ( var i = 0; i < intersects.length; i++ ) {		
+				if (that.gameState == gameStates.READYPLAYERONE) {
+					var tile = that.tiles[intersects[i].object.tileIndex];
+
+					
+					bg.blink1.fadeRgb(tile.colorArray[0] * 255, tile.colorArray[1] * 255, tile.colorArray[2] * 255, 250, 0);
+					//console.log(intersects[i].object.tileIndex);
+				}
+
+				intersects[ i ].object.material.color.set( 0xff0000 );
+			}
 
 		},
 		onDevicesEnumerated: function(devices) {
@@ -131,16 +153,7 @@
 		},
 		render: function() {
 		
-			this.raycaster.setFromCamera( this.mouseVector, this.camera );	
 
-			for (var tile of this.tiles) {
-				tile.mesh.material.color.set(tile.color);
-			}
-
-			var intersects = this.raycaster.intersectObjects( this.scene.children );
-			for ( var i = 0; i < intersects.length; i++ ) {		
-				intersects[ i ].object.material.color.set( 0xff0000 );
-			}
 			Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
 		},
 		animate: function() {
