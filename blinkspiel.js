@@ -2,7 +2,8 @@
 	var gameStates = {
 		WAITINGFORDEVICE: 0,
 		READYPLAYERONE: 1,
-		PLAY: 2
+		PLAYPATTERN: 2,
+		PLAYING: 3
 	};
 
 	var tileStates = {
@@ -79,7 +80,7 @@
 
 			var possiblePos = new THREE.Vector2();
 			console.log("generating path");
-			for (var i= 0; i<8; i++) {
+			for (var i= 0; i<4; i++) {
 				var iterations = 0;
 				do {
 					iterations++;
@@ -202,9 +203,9 @@
 			return color;
 		},
 		getSelectable: function(color) {
-			color.r = 0.1 * color.r;
-			color.g = 0.1 * color.g;
-			color.b = 0.1 * color.b;
+			color.r = 0.5 * color.r;
+			color.g = 0.5 * color.g;
+			color.b = 0.5 * color.b;
 			return color;
 		},
 		movePlayer: function() {
@@ -254,7 +255,7 @@
 
 			that = Blinkspiel;
 			if (that.gameState == gameStates.READYPLAYERONE) {
-				that.setGameState(gameStates.PLAY);
+				that.setGameState(gameStates.PLAYPATTERN);
 
 			}
 			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -264,7 +265,7 @@
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
 			for ( var i = 0; i < intersects.length; i++ ) {		
 				var tile = that.tiles[intersects[i].object.tileIndex];
-				if (that.gameState == gameStates.READYPLAYERONE && tile.state == tileStates.SELECTABLE) {
+				if (that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
 					
 					tile.state = tileStates.SELECTED;
 					that.playerPosition.x = tile.x;
@@ -290,22 +291,11 @@
 
 			
 			that.updateTileStates();
-			/*for (var tile of that.tiles) {
-				if (tile.state == tileStates.INACTIVE) {
-					tile.mesh.material.color.set(that.getInactive(tile.color.clone()));	
-				} else {
-					tile.mesh.material.color.set(tile.color);	
-				}
-
-				
-				tile.mesh.scale.y = 1;
-			}	*/
-			
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
 			for ( var i = 0; i < intersects.length; i++ ) {		
 				var tile = that.tiles[intersects[i].object.tileIndex];
 
-				if (that.gameState == gameStates.READYPLAYERONE && tile.state == tileStates.SELECTABLE) {
+				if (that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
 					
 					bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
 					//console.log(intersects[i].object.tileIndex);
@@ -354,10 +344,14 @@
 				//bg.blink1.fadeRgb(60, 128, 200, 2500, 0);
 				bg.blink1.fadeRgb(0, 0, 0, 250, 0);
 				break;
-				case gameStates.PLAY:
+				case gameStates.PLAYPATTERN:
 				console.log("play");
 				this.patternTime =  new Date();
 				this.currentDelta = -1;
+				break;
+				case gameStates.PLAYING:
+				console.log("nun gehts los");
+
 				break;
 			}
 		},
@@ -381,10 +375,12 @@
 			 	console.log(color);
 
 			 	Blinkspiel.currentDelta = delta;
+			} else if (delta >= Blinkspiel.currentPath.length * 2) {
+				Blinkspiel.setGameState(gameStates.PLAYING)
 			}			
 		},
 		render: function() {
-			if (Blinkspiel.gameState == gameStates.PLAY) {
+			if (Blinkspiel.gameState == gameStates.PLAYPATTERN) {
 				Blinkspiel.playPattern();
 			}
 			
