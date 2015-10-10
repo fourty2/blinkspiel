@@ -4,6 +4,13 @@
 		READYPLAYERONE: 1
 	};
 
+	var colors = [
+		new THREE.Color(1,0,0),
+		new THREE.Color(0,1,0),
+		new THREE.Color(0,0,1),
+		new THREE.Color(1,0,1)
+	];
+
 	var Blinkspiel = {
 		blink1: null,
 		gamecanvas: null,
@@ -41,25 +48,29 @@
 			// matrix von 5x5 planes erstellen
 			this.tiles = [];
 			var tileGeometry = new THREE.BoxGeometry(10,1,10);
+			
 			var centeroffset = 25;
 			//this.tileObjects = new THREE.Object3D();
 			for (var x = 0; x<5; x++) {
 				for (var y = 0; y<5; y++) {
 
-					var mat = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});
-					var mesh = new THREE.Mesh(tileGeometry, mat);
+					var tileMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});		
+					var mesh = new THREE.Mesh(tileGeometry, tileMaterial);
+
 					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
 
-					var color = [Math.random(), Math.random(), Math.random()];
+					// select color random from list
+					var color = colors[Math.floor(Math.random() * (colors.length))].clone();
+					console.log(colors);
 					this.tiles.push(
 					{
 						x: x,
-						y: y,
-						colorArray: color,
-						color: new THREE.Color(color[0], color[1], color[2]),
+						y: y,						
+						color: color,
 						mesh: mesh
 					}
 					);
+					mesh.material.color = color.clone();
 					mesh.tileIndex = (this.tiles.length - 1);
 					this.scene.add(mesh);
 				}
@@ -95,6 +106,7 @@
 
 			for (var tile of that.tiles) {
 				tile.mesh.material.color.set(tile.color);
+				tile.mesh.scale.y = 1;
 			}
 
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
@@ -103,11 +115,12 @@
 					var tile = that.tiles[intersects[i].object.tileIndex];
 
 					
-					bg.blink1.fadeRgb(tile.colorArray[0] * 255, tile.colorArray[1] * 255, tile.colorArray[2] * 255, 250, 0);
+					bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
 					//console.log(intersects[i].object.tileIndex);
 				}
 
-				intersects[ i ].object.material.color.set( 0xff0000 );
+				//intersects[ i ].object.material.color.set( 0xff0000 );
+				intersects[ i ].object.scale.y = 2;
 			}
 
 		},
