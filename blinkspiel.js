@@ -6,7 +6,10 @@
 
 	var Blinkspiel = {
 		blink1: null,
+		gamecanvas: null,
 		gameState: gameStates.WAITINGFORDEVICE,
+		raycaster: new THREE.Raycaster(),
+		mouseVector: new THREE.Vector2(),
 		init: function() {
 
 			var WIDTH = window.innerWidth;
@@ -39,6 +42,7 @@
 			this.tiles = [];
 			var tileGeometry = new THREE.BoxGeometry(10,1,10);
 			var centeroffset = 25;
+			//this.tileObjects = new THREE.Object3D();
 			for (var x = 0; x<5; x++) {
 				for (var y = 0; y<5; y++) {
 
@@ -59,14 +63,7 @@
 				}
 
 			}
-
-
-			/*var planegeo = new THREE.PlaneGeometry(30,30, 32);
-			var material2 = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});
-			var mesh2 = new THREE.Mesh(planegeo, material2);
-			this.scene.add(mesh2);
-			*/
-
+		//	this.scene.add(this.tileObjects);
 
 		/*	var test = new THREE.SphereGeometry(10,10, 32);
 			var material = new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide});
@@ -78,7 +75,7 @@
 
 			this.animate();
 
-
+			window.addEventListener( 'mousemove', Blinkspiel.onMouseMove, false );
 			chrome.hid.getDevices({}, Blinkspiel.onDevicesEnumerated);
 			if (chrome.hid.onDeviceAdded) {
 				chrome.hid.onDeviceAdded.addListener(Blinkspiel.onDeviceAdded);
@@ -86,6 +83,11 @@
 			if (chrome.hid.onDeviceRemoved) {
 				chrome.hid.onDeviceRemoved.addListener(Blinkspiel.onDeviceRemoved);
 			}
+		},
+		onMouseMove: function(e) {
+			Blinkspiel.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+			Blinkspiel.mouseVector.y = - ( e.clientY / window.innerHeight) * 2 + 1;
+
 		},
 		onDevicesEnumerated: function(devices) {
 			for (var device of devices) {
@@ -128,6 +130,17 @@
 			}
 		},
 		render: function() {
+		
+			this.raycaster.setFromCamera( this.mouseVector, this.camera );	
+
+			for (var tile of this.tiles) {
+				tile.mesh.material.color.set(tile.color);
+			}
+
+			var intersects = this.raycaster.intersectObjects( this.scene.children );
+			for ( var i = 0; i < intersects.length; i++ ) {		
+				intersects[ i ].object.material.color.set( 0xff0000 );
+			}
 			Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
 		},
 		animate: function() {
