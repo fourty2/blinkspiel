@@ -57,21 +57,23 @@
 
 			// matrix von 5x5 planes erstellen
 			this.tiles = [];
-			var tileGeometry = new THREE.BoxGeometry(10,1,10);
+			var tileGeometry = new THREE.BoxGeometry(10,4,10);
 			
 			var centeroffset = 25;
+
+
+      // path generation
 			this.currentPath = [];
 			var checkOldPos = function(pos) {
-				for (pathPos of Blinkspiel.currentPath) {
+				for (var pathPos of Blinkspiel.currentPath) {
 					if (pathPos.position.x == pos.x && pathPos.position.y == pos.y) {
 						return true;
 					}
 				}
 
 				return false;
-			}
+			};
 
-			// weg erstellen
 			var currentPos = new THREE.Vector2(2,2);
 			this.currentPath.push({
 					'position': currentPos,
@@ -107,7 +109,7 @@
 					( possiblePos.x == currentPos.x && possiblePos.y == currentPos.y ) || 
 					(checkOldPos(possiblePos)) || 
 					iterations > 10
-				)
+				);
 				
 				if (iterations > 10) {
 					console.log ("neu generieren");
@@ -129,9 +131,9 @@
 			for (var x = 0; x<5; x++) {
 				for (var y = 0; y<5; y++) {
 
-					var tileMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00, side: THREE.DoubleSide});		
+					var tileMaterial = new THREE.MeshPhongMaterial({color: 0x00ff00, side: THREE.DoubleSide});		
 					var mesh = new THREE.Mesh(tileGeometry, tileMaterial);
-
+          mesh.receiveShadow = true;
 					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
 
 
@@ -163,6 +165,40 @@
 			}
 			this.updateTileStates();
 
+      // auf den letzten pfad dann noch das ziel setzen
+      var lastPathItem = this.currentPath[this.currentPath.length - 1];
+      console.log(lastPathItem);
+			var destination = new THREE.Mesh(
+			  new THREE.TorusKnotGeometry( 3, 1, 20, 16 ),
+				//	new THREE.SphereGeometry(4,8,8),
+					new THREE.MeshPhongMaterial({color:lastPathItem.color, shading: THREE.FlatShading})
+				);
+			destination.castShadow = true;
+			destination.position.set((lastPathItem.position.x * 12) - centeroffset,
+			            5, 
+			             (lastPathItem.position.y * 12) - centeroffset);
+      
+      this.scene.add(destination);
+      
+      
+      // es werde licht
+      
+      var light = new THREE.SpotLight(0xffffff);
+      light.position.set(20,80,30);
+     
+      light.castShadow = true;
+
+      light.shadowMapWidth = 1024;
+      light.shadowMapHeight = 1024;
+      
+      light.shadowCameraNear = 10;
+      light.shadowCameraFar = 200;
+      light.shadowCameraFov = 40;
+      light.intensity = 3.0;
+      
+      this.scene.add(light);
+      
+
 		//	this.scene.add(this.tileObjects);
 
 		/*	var test = new THREE.SphereGeometry(10,10, 32);
@@ -172,9 +208,10 @@
 			*/
 
 			this.player = new THREE.Mesh(
-					new THREE.SphereGeometry(5,5,8),
-					new THREE.MeshBasicMaterial({color:0x00ff00})
+					new THREE.SphereGeometry(4,8,8),
+					new THREE.MeshPhongMaterial({color:0x00ff00, shading: THREE.FlatShading})
 				);
+			this.player.castShadow = true;
 			this.playerPosition.x = 2;
 			this.playerPosition.y = 2;
 			this.movePlayer();
@@ -210,22 +247,24 @@
 		},
 		movePlayer: function() {
 			var centeroffset = 25;
-			this.player.position.set((this.playerPosition.x * 12) - centeroffset,0, (this.playerPosition.y * 12) - centeroffset );
+			this.player.position.set((this.playerPosition.x * 12) - centeroffset,5, (this.playerPosition.y * 12) - centeroffset );
 
 			// nun die tilestates ändern
 			for (var tile of this.tiles) {
 				if (tile.state == tileStates.SELECTABLE) {
-					tile.state = tileStates.INACTIVE;
+				  if (tile.state != tileStates.ACTIVE) {
+					  tile.state = tileStates.INACTIVE;
+				  }
 				}
 			}
 
 			var x = this.playerPosition.x;
 			var y = this.playerPosition.y;
 
-			if (x < 5) { this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE; };
-			if (x > 0) { this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE; };
-			if (y < 5) { this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE; };
-			if (y > 0) { this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE; };
+			if (x < 5) { this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE; }
+			if (x > 0) { this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE; }
+			if (y < 5) { this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE; }
+			if (y > 0) { this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE; }
 
 			this.updateTileStates();
 
@@ -265,7 +304,9 @@
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
 			for ( var i = 0; i < intersects.length; i++ ) {		
 				var tile = that.tiles[intersects[i].object.tileIndex];
-				if (that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
+				if (tile && that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
+					
+					that.tiles[((that.playerPosition.x) * 5) + that.playerPosition.y].state = tileStates.ACTIVE;
 					
 					tile.state = tileStates.SELECTED;
 					that.playerPosition.x = tile.x;
@@ -295,7 +336,7 @@
 			for ( var i = 0; i < intersects.length; i++ ) {		
 				var tile = that.tiles[intersects[i].object.tileIndex];
 
-				if (that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
+				if (tile && that.gameState == gameStates.PLAYING && tile.state == tileStates.SELECTABLE) {
 					
 					bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
 					//console.log(intersects[i].object.tileIndex);
@@ -403,3 +444,12 @@
 	});
 
 })();
+/*	});
+	});
+
+})();
+*///);););();
+///);););;*///);););();
+///);););;;();
+///);););;*///);););();
+///);););;;;
