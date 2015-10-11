@@ -261,10 +261,10 @@
 			var x = this.playerPosition.x;
 			var y = this.playerPosition.y;
 
-			if (x < 5) { this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE; }
-			if (x > 0) { this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE; }
-			if (y < 5) { this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE; }
-			if (y > 0) { this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE; }
+			if (x < 5 && this.tiles[((x + 1) * 5) + y].state != tileStates.ACTIVE) { this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE; }
+			if (x > 0 && this.tiles[((x - 1) * 5) + y].state != tileStates.ACTIVE) { this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE; }
+			if (y < 5 && this.tiles[(x * 5) + y + 1].state != tileStates.ACTIVE) { this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE; }
+			if (y > 0  && this.tiles[(x * 5) + y - 1].state != tileStates.ACTIVE) { this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE; }
 
 			this.updateTileStates();
 
