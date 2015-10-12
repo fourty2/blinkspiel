@@ -240,6 +240,26 @@
 			this.scene.add(mesh);
 			*/
 
+		var text = "BLINKSPIEL";
+		this.menuLine = new THREE.Mesh(
+				new THREE.TextGeometry(text,
+						{
+							size: 8,
+							height: 2,
+							font: 'LobsterLove',
+							weight: 'normal',
+							style: 'normal'
+						}
+					),
+				new THREE.MeshLambertMaterial({color: 0x336699})
+			);
+
+		this.menuLine.position.set(-38,15,-25);
+		//this.menuLine.rotation.y = Math.PI;
+		this.menuLine.rotation.x = -Math.PI/4;
+		this.menuLine.castShadow = true;
+		this.scene.add(this.menuLine);
+
 			this.player = new THREE.Mesh(
 					new THREE.SphereGeometry(4,8,8),
 					new THREE.MeshPhongMaterial({color:0x00ff00, shading: THREE.FlatShading})
@@ -254,10 +274,20 @@
 			this.camera.lookAt(new THREE.Vector3(0,0,0));
 
 
+			this.effectComposer = new THREE.EffectComposer( this.renderer);
+			this.effectComposer.addPass( new THREE.RenderPass(this.scene, this.camera));
+			var copyPass = new THREE.ShaderPass( THREE.CopyShader );
+			copyPass.renderToScreen = true;
+			this.effectComposer.addPass( new THREE.BloomPass(1, 17, 8, 128));
+			this.effectComposer.addPass(copyPass);
+		
+
 			this.animate();
 
 			window.addEventListener( 'mousemove', Blinkspiel.onMouseMove, false );
 			window.addEventListener( 'click', Blinkspiel.onMouseClick, false );
+			var startButton = document.getElementById('startButton');
+			startButton.addEventListener( 'click', Blinkspiel.startGame.bind(this), false );
 			window.addEventListener( 'resize', Blinkspiel.onWindowResize.bind(this), false );
 			this.setGameState(gameStates.WAITINGFORDEVICE);
 			chrome.hid.getDevices({}, Blinkspiel.onDevicesEnumerated);
@@ -269,9 +299,9 @@
 			}
 		},
 		getInactive: function(color) {
-			color.r = 0.15 * color.r;
-			color.g = 0.15 * color.g;
-			color.b = 0.15 * color.b;
+			color.r = 0.05 * color.r;
+			color.g = 0.05 * color.g;
+			color.b = 0.05 * color.b;
 			return color;
 		},
 		getSelectable: function(color) {
@@ -341,10 +371,10 @@
 		},
 		onMouseClick: function(e) {
 			
-
+			//that.setGameState(gameStates.PLAYPATTERN);
 			that = Blinkspiel;
-			if (that.gameState == gameStates.READYPLAYERONE) {
-				that.setGameState(gameStates.PLAYPATTERN);
+			if (that.gameState != gameStates.PLAYING) {
+				return;	
 
 			}
 			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -388,6 +418,7 @@
 
 			
 			that.updateTileStates();
+			var coloring = false;
 			var intersects = that.raycaster.intersectObjects( that.scene.children );
 			for ( var i = 0; i < intersects.length; i++ ) {		
 				var tile = that.tiles[intersects[i].object.tileIndex];
@@ -396,10 +427,15 @@
 					
 					bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
 					//console.log(intersects[i].object.tileIndex);
+					coloring = true;
 					intersects[ i ].object.material.color.set( tile.color );
 					intersects[ i ].object.scale.y = 2;
 				}
 
+			}
+
+			if (tile && !coloring && that.gameState == gameStates.PLAYING) {
+				bg.blink1.fadeRgb(0,0,0, 0, 0);
 			}
 
 		},
@@ -460,8 +496,6 @@
 				console.log("play");
 					var startGame = document.getElementById('startGame');
 					startGame.style.display = 'none';
-					var title = document.getElementById('title');
-					title.style.display = 'none';
 
 					this.patternTime =  new Date();
 					this.currentDelta = -1;
@@ -488,16 +522,20 @@
 			if (delta < (Blinkspiel.currentPath.length -1) * 2 && Blinkspiel.currentDelta != delta) {
 							 
 				if (delta % 2 == 0) {
+					var blinky = document.getElementById('blink');
+					blinky.style.display = 'block';
 					var color = Blinkspiel.currentPath[(delta / 2) + 1].color;	
 				 	bg.blink1.fadeRgb(color.r * 255, color.g * 255, color.b * 255, 150, 0);
 				} else {
+					var blinky = document.getElementById('blink');
+					blinky.style.display = 'none';
 				 	bg.blink1.fadeRgb(0,0,0, 600, 0);
 				
 				}
 
 			 	console.log(color);
 			 	Blinkspiel.currentDelta = delta;
-			} else if (delta >= Blinkspiel.currentPath.length * 2) {
+			} else if (delta >= (Blinkspiel.currentPath.length -1) * 2) {
 				Blinkspiel.setGameState(gameStates.PLAYING)
 			}			
 		},
@@ -529,7 +567,8 @@
 
 			}			
 
-			Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
+			Blinkspiel.effectComposer.render(0.017); 
+			//Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
 		},
 		animate: function() {
 			requestAnimationFrame(Blinkspiel.animate);

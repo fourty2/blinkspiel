@@ -8,17 +8,7 @@
 				margin: 0 0;
 				font-family: Century Gothic, sans-serif
 			}
-			#title {
-				position: absolute;
-				width: 100%;
-				text-align: center;
-				top: 20%;
-				margin: 0 auto;
-				font-weight: lighter;
-				color: #fff;
-				font-size: 8em;
-			}
-
+			
 			#wfd {
 				position: absolute;
 				width: 100%;
@@ -31,38 +21,82 @@
 			}
 			#startGame {
 				position: absolute;
-				width: 100%;
+				background: rgba(0,0,0,0.8);
+				padding: 30px;
 				text-align: center;
 				top: 60%;
+				left: 18%;
+				width: 60%;				
 				margin: 0 auto;
 				font-weight: lighter;
-				color: #00ff00;
+				color: #f0f0f0;
 				font-size: 3em;
 				display: none;
 			}
 			#lost {
 				position: absolute;
+				background: rgba(0,0,0,0.8);
+				padding: 30px;
 				width: 100%;
 				text-align: center;
 				top: 40%;
 				margin: 0 auto;
-				font-weight: lighter;
+				font-weight: bold;
 				color: #ff0000;
 				font-size: 8em;
+			 	display: none;
+			}
+
+			#startButton {
+				width: 40%;
+				font-weight: bold;
+				font-size: 1.2em;
+				padding: 5px;
+				background-color: #f0f0f0;
+				border: 1px solid #333333;
+			}
+			#info {
+				position: absolute;
+				background: rgba(0,0,0,0.8);			
+				text-align: center;
+				bottom: 0;
+				width: 100%;				
+				margin: 0 auto;
+				padding-top:5px;
+				font-weight: 400;
+				color: #f0f0f0;
+				font-size: 1.2em;
+				
+			}
+
+			#blink {
+				font-size: 3em;
+				position: absolute;
+				top: 30%;
+				right: 20%;
+				color: #336699;
+				  -ms-transform: rotate(13deg); /* IE 9 */
+    -webkit-transform: rotate(13deg); /* Chrome, Safari, Opera */
+    transform: rotate(13deg);
+
+    			display: none;
 			}
 
 		</style>
 	</head>
 	<body>
-		<div id="title">BLINKSPIEL</div>
+
+		<span id="blink">*blink*</span>
+		
 		<div id="wfd">Bitte Blink(1) anschließen</div>
 		<div id="lost">NOOOOOIIIN :&lt;</div>
+		<div id="info">made with &hearts; by @snooze82 - für den eSailors blink(1) contest</div>
 		<div id="startGame">
 
 		Achte auf die Farbreihenfolge des Blink(1) und folge dem Weg zum Schatz.<br />
 		Viel Erfolg!<br />
 
-		<button onclick="Blinkspiel.startGame()">Start</button>
+		<button id="startButton">Start</button>
 		</div>
 		<canvas id="blinkspiel"></canvas>
 		<script src="blink1.js"></script>
