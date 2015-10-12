@@ -15,7 +15,7 @@ chrome.app.runtime.onLaunched.addListener(function() {
   chrome.app.window.create(
       "blinkspiel.html", {
         id: "blinkspiel",
-        outerBounds: { width: 640, height: 480 },
+        outerBounds: { width: 1024, height: 786 },
         resizable: true
       }, onAppWindowCreated);
 });

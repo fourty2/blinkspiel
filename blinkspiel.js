@@ -3,7 +3,8 @@
 		WAITINGFORDEVICE: 0,
 		READYPLAYERONE: 1,
 		PLAYPATTERN: 2,
-		PLAYING: 3
+		PLAYING: 3,
+		LOST: 4
 	};
 
 	var tileStates = {
@@ -17,7 +18,7 @@
 		new THREE.Color(1,0,0),
 		new THREE.Color(0,1,0),
 		new THREE.Color(0,0,1),
-		new THREE.Color(1,0,1)
+		new THREE.Color(1,1,0)
 	];
 
 	var Blinkspiel = {
@@ -27,6 +28,7 @@
 		raycaster: new THREE.Raycaster(),
 		mouseVector: new THREE.Vector2(),
 		playerPosition: new THREE.Vector2(),
+		currentPlayerPath: 0,
 		init: function() {
 
 			var WIDTH = window.innerWidth;
@@ -163,6 +165,9 @@
 					this.scene.add(mesh);
 				}
 			}
+			// 2* 5 + 2
+			this.tiles[12].state = tileStates.ACTIVE;
+
 			this.updateTileStates();
 
       // auf den letzten pfad dann noch das ziel setzen
@@ -178,26 +183,54 @@
 			            5, 
 			             (lastPathItem.position.y * 12) - centeroffset);
       
-      this.scene.add(destination);
-      
-      
-      // es werde licht
-      
-      var light = new THREE.SpotLight(0xffffff);
-      light.position.set(20,80,30);
-     
-      light.castShadow = true;
+	      this.scene.add(destination);
+	      
+	      
+	      // es werde licht
+	      
+	      var light = new THREE.SpotLight(0xffffff);
+	      light.position.set(20,120,30);
+	     
+	      light.castShadow = true;
 
-      light.shadowMapWidth = 1024;
-      light.shadowMapHeight = 1024;
-      
-      light.shadowCameraNear = 10;
-      light.shadowCameraFar = 200;
-      light.shadowCameraFov = 40;
-      light.intensity = 3.0;
-      
-      this.scene.add(light);
-      
+	      light.shadowMapWidth = 1024;
+	      light.shadowMapHeight = 1024;
+	      
+	      light.shadowCameraNear = 10;
+	      light.shadowCameraFar = 200;
+	      light.shadowCameraFov = 40;
+	      light.intensity = 4.0;
+	      
+	      this.scene.add(light);
+	      
+
+		var geometry  = new THREE.SphereGeometry(200, 32, 32)
+		// create the material, using a texture of startfield
+		var material  = new THREE.MeshLambertMaterial({color:0x100101})
+		material.side  = THREE.BackSide
+		// create the mesh based on geometry and material
+		var mesh  = new THREE.Mesh(geometry, material)
+		this.scene.add(mesh);
+
+
+	      // noch ein licht von unten
+	      var light2 = new THREE.SpotLight(0xff0000);
+	      light2.position.set(0,-100,50);
+	     
+	      light2.castShadow = true;
+
+	      light2.shadowMapWidth = 1024;
+	      light2.shadowMapHeight = 1024;
+	      
+	      light2.shadowCameraNear = 10;
+	      light2.shadowCameraFar = 200;
+	      light2.shadowCameraFov = 40;
+	      light2.intensity = 3.0;
+	      
+	      this.scene.add(light2);
+	      
+
+
 
 		//	this.scene.add(this.tileObjects);
 
@@ -225,6 +258,8 @@
 
 			window.addEventListener( 'mousemove', Blinkspiel.onMouseMove, false );
 			window.addEventListener( 'click', Blinkspiel.onMouseClick, false );
+			window.addEventListener( 'resize', Blinkspiel.onWindowResize.bind(this), false );
+			this.setGameState(gameStates.WAITINGFORDEVICE);
 			chrome.hid.getDevices({}, Blinkspiel.onDevicesEnumerated);
 			if (chrome.hid.onDeviceAdded) {
 				chrome.hid.onDeviceAdded.addListener(Blinkspiel.onDeviceAdded);
@@ -234,20 +269,35 @@
 			}
 		},
 		getInactive: function(color) {
-			color.r = 0.1 * color.r;
-			color.g = 0.1 * color.g;
-			color.b = 0.1 * color.b;
+			color.r = 0.15 * color.r;
+			color.g = 0.15 * color.g;
+			color.b = 0.15 * color.b;
 			return color;
 		},
 		getSelectable: function(color) {
-			color.r = 0.5 * color.r;
-			color.g = 0.5 * color.g;
-			color.b = 0.5 * color.b;
+			color.r = 0.4 * color.r;
+			color.g = 0.4 * color.g;
+			color.b = 0.4 * color.b;
 			return color;
 		},
 		movePlayer: function() {
 			var centeroffset = 25;
 			this.player.position.set((this.playerPosition.x * 12) - centeroffset,5, (this.playerPosition.y * 12) - centeroffset );
+
+			console.log(this.currentPlayerPath);
+
+			if (this.currentPath[this.currentPlayerPath].position.x == this.playerPosition.x && 
+				this.currentPath[this.currentPlayerPath].position.y == this.playerPosition.y
+				) {
+				console.log("richtig!");
+			} else {
+				console.log(this.currentPath[this.currentPlayerPath]);
+				console.log(this.playerPosition);
+				this.setGameState(gameStates.LOST);
+			}
+
+			this.currentPlayerPath++;
+
 
 			// nun die tilestates ändern
 			for (var tile of this.tiles) {
@@ -323,6 +373,12 @@
 
 			console.log(e);
 		},
+		onWindowResize: function() {
+			 this.camera.aspect = window.innerWidth / window.innerHeight;
+	    	this.camera.updateProjectionMatrix();
+
+	    	this.renderer.setSize( window.innerWidth, window.innerHeight );
+		},
 		onMouseMove: function(e) {
 			that = Blinkspiel;
 			that.mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -381,50 +437,97 @@
 			console.log("setting game state");
 			this.gameState = state;
 			switch (this.gameState) {
+				case gameStates.WAITINGFORDEVICE:
+					var wfd = document.getElementById('wfd');
+					wfd.style.display = 'block';
+					break;
 				case gameStates.READYPLAYERONE:
-				//bg.blink1.fadeRgb(60, 128, 200, 2500, 0);
-				bg.blink1.fadeRgb(0, 0, 0, 250, 0);
+					var lost = document.getElementById('lost');
+					lost.style.display = 'none';
+
+					var wfd = document.getElementById('wfd');
+					wfd.style.display = 'none';
+
+					var startGame = document.getElementById('startGame');
+					startGame.style.display = 'block';
+
+					// init game
+
+					bg.blink1.fadeRgb(0, 0, 0, 250, 0);
+
 				break;
 				case gameStates.PLAYPATTERN:
 				console.log("play");
-				this.patternTime =  new Date();
-				this.currentDelta = -1;
+					var startGame = document.getElementById('startGame');
+					startGame.style.display = 'none';
+					var title = document.getElementById('title');
+					title.style.display = 'none';
+
+					this.patternTime =  new Date();
+					this.currentDelta = -1;
 				break;
 				case gameStates.PLAYING:
 				console.log("nun gehts los");
 
 				break;
+				case gameStates.LOST:
+
+					var lost = document.getElementById('lost');
+					lost.style.display = 'block';
+
+				break;
+
 			}
+		},
+		startGame: function() {
+			this.setGameState(gameStates.PLAYPATTERN);
 		},
 		playPattern: function() {
 			var actualTime = new Date();
 			var delta = Math.floor((actualTime - Blinkspiel.patternTime) / 1000);
-			if (delta < Blinkspiel.currentPath.length * 2 && Blinkspiel.currentDelta != delta) {
-				console.log("set led");
-			 	
-
+			if (delta < (Blinkspiel.currentPath.length -1) * 2 && Blinkspiel.currentDelta != delta) {
+							 
 				if (delta % 2 == 0) {
-					var color = Blinkspiel.currentPath[delta / 2].color;	
+					var color = Blinkspiel.currentPath[(delta / 2) + 1].color;	
 				 	bg.blink1.fadeRgb(color.r * 255, color.g * 255, color.b * 255, 150, 0);
 				} else {
-					console.log("black");
 				 	bg.blink1.fadeRgb(0,0,0, 600, 0);
 				
 				}
 
-
 			 	console.log(color);
-
 			 	Blinkspiel.currentDelta = delta;
 			} else if (delta >= Blinkspiel.currentPath.length * 2) {
 				Blinkspiel.setGameState(gameStates.PLAYING)
 			}			
 		},
+		fallingBlocks: function() {
+			for (var tile of this.tiles) {
+				if (tile.state != tileStates.ACTIVE && tile.mesh.position.y > -100) {
+
+					tile.mesh.position.y-= Math.random();
+					tile.mesh.rotateX(Math.random() * 0.1);
+					tile.mesh.rotateY(Math.random() * 0.1);
+					tile.mesh.rotateZ(Math.random() * 0.1);
+				}
+			}
+
+			if (this.player.position.y > -100) {
+				this.player.position.y-=Math.random();	
+			} else {
+				this.setGameState(gameStates.READYPLAYERONE);
+			}
+			
+
+
+		},
 		render: function() {
 			if (Blinkspiel.gameState == gameStates.PLAYPATTERN) {
 				Blinkspiel.playPattern();
-			}
-			
+			} else if (Blinkspiel.gameState == gameStates.LOST) {
+				Blinkspiel.fallingBlocks();
+
+			}			
 
 			Blinkspiel.renderer.render(Blinkspiel.scene, Blinkspiel.camera);
 		},
@@ -444,12 +547,3 @@
 	});
 
 })();
-/*	});
-	});
-
-})();
-*///);););();
-///);););;*///);););();
-///);););;;();
-///);););;*///);););();
-///);););;;;

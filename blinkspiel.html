@@ -2,13 +2,68 @@
 <html>
 	<head>
 		<!-- <link rel="stylesheet" href="style.css"> //-->
+		<meta charset="UTF-8">
 		<style>
 			body  {
 				margin: 0 0;
+				font-family: Century Gothic, sans-serif
 			}
+			#title {
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				top: 20%;
+				margin: 0 auto;
+				font-weight: lighter;
+				color: #fff;
+				font-size: 8em;
+			}
+
+			#wfd {
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				top: 10%;
+				margin: 0 auto;
+				font-weight: lighter;
+				color: #ff8000;
+				font-size: 3em;
+			}
+			#startGame {
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				top: 60%;
+				margin: 0 auto;
+				font-weight: lighter;
+				color: #00ff00;
+				font-size: 3em;
+				display: none;
+			}
+			#lost {
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				top: 40%;
+				margin: 0 auto;
+				font-weight: lighter;
+				color: #ff0000;
+				font-size: 8em;
+			}
+
 		</style>
 	</head>
 	<body>
+		<div id="title">BLINKSPIEL</div>
+		<div id="wfd">Bitte Blink(1) anschließen</div>
+		<div id="lost">NOOOOOIIIN :&lt;</div>
+		<div id="startGame">
+
+		Achte auf die Farbreihenfolge des Blink(1) und folge dem Weg zum Schatz.<br />
+		Viel Erfolg!<br />
+
+		<button onclick="Blinkspiel.startGame()">Start</button>
+		</div>
 		<canvas id="blinkspiel"></canvas>
 		<script src="blink1.js"></script>
 		<script src="three.min.js"></script>    
