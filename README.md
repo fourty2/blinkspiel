@@ -14,14 +14,14 @@ Einsendung zum eSailors blink(1) Contest
 - Kamera zoom beim Spielen
 - ggf. Online-Toplist
 - Figur und Animation modellieren
-
+- Code aufräumen
 
 # Bugs
 - SELECTABLE felder werden teilweise nicht richtig berechnet
 
 
 
-
+rgbr
 
 
 

@@ -19,7 +19,7 @@
 				color: #ff8000;
 				font-size: 3em;
 			}
-			#startGame {
+			#startGame, #stageCleared {
 				position: absolute;
 				background: rgba(0,0,0,0.8);
 				padding: 30px;
@@ -47,7 +47,7 @@
 			 	display: none;
 			}
 
-			#startButton {
+			#startButton, #nextButton{
 				width: 40%;
 				font-weight: bold;
 				font-size: 1.2em;
@@ -55,6 +55,7 @@
 				background-color: #f0f0f0;
 				border: 1px solid #333333;
 			}
+
 			#info {
 				position: absolute;
 				background: rgba(0,0,0,0.8);			
@@ -98,6 +99,12 @@
 
 		<button id="startButton">Start</button>
 		</div>
+		<div id="stageCleared">
+			Gut gemacht! Weiter geht's!<br />
+			<button id="nextButton">Los! Los!</button>
+		</div>
+
+
 		<canvas id="blinkspiel"></canvas>
 		<script src="blink1.js"></script>
 		<script src="three.min.js"></script>    
