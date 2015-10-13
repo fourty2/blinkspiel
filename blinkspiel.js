@@ -68,7 +68,7 @@
       // path generation
 			this.currentPath = [];
 			var checkOldPos = function(pos) {
-				for (var pathPos in Blinkspiel.currentPath) {
+				for (var pathPos of Blinkspiel.currentPath) {
 					if (pathPos.position.x == pos.x && pathPos.position.y == pos.y) {
 						return true;
 					}
@@ -143,7 +143,7 @@
 					var color = colors[Math.floor(Math.random() * (colors.length))].clone();					
 					var state = tileStates.INACTIVE;
 					// schauen obs, im pfad ist
-					for (var pathPos in this.currentPath) {
+					for (var pathPos of this.currentPath) {
 						if (pathPos.position.x == x && pathPos.position.y == y) {
 							color = pathPos.color.clone();
 							//state = tileStates.ACTIVE;
@@ -331,7 +331,7 @@
 
 
 			// nun die tilestates ändern
-			for (var tile in this.tiles) {
+			for (var tile of this.tiles) {
 				if (tile.state == tileStates.SELECTABLE) {
 				  if (tile.state != tileStates.ACTIVE) {
 					  tile.state = tileStates.INACTIVE;
@@ -351,7 +351,7 @@
 
 		},
 		updateTileStates: function() {
-			for (var tile in this.tiles) {
+			for (var tile of this.tiles) {
 				switch (tile.state) {
 					case tileStates.SELECTABLE:
 						
@@ -446,7 +446,7 @@
 
 		},
 		onDevicesEnumerated: function(devices) {
-			for (var device in devices) {
+			for (var device of devices) {
       			Blinkspiel.onDeviceAdded(device);
 		    }
 		},
@@ -546,7 +546,7 @@
 			}			
 		},
 		fallingBlocks: function() {
-			for (var tile in this.tiles) {
+			for (var tile of this.tiles) {
 				if (tile.state != tileStates.ACTIVE && tile.mesh.position.y > -100) {
 
 					tile.mesh.position.y-= Math.random();
