@@ -241,15 +241,14 @@
 			*/
 
 		var text = "BLINKSPIEL";
-		/*this.menuLine = new THREE.Mesh(
+		this.menuLine = new THREE.Mesh(
 				new THREE.TextGeometry(text,
 						{
 							size: 8,
 							height: 2,
-							font: 'Yu Gothic Light',
+							font: 'LobsterLove',
 							weight: 'normal',
-							style: 'light',
-							resolution: 1
+							style: 'normal'
 						}
 					),
 				new THREE.MeshLambertMaterial({color: 0x336699})
@@ -259,7 +258,7 @@
 		//this.menuLine.rotation.y = Math.PI;
 		this.menuLine.rotation.x = -Math.PI/4;
 		this.menuLine.castShadow = true;
-		this.scene.add(this.menuLine);*/
+		this.scene.add(this.menuLine);
 
 			this.player = new THREE.Mesh(
 					new THREE.SphereGeometry(4,8,8),
