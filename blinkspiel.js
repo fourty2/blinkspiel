@@ -11,7 +11,7 @@
 		INACTIVE: 0,
 		SELECTED: 1,
 		SELECTABLE: 2,
-		ACTIVE: 3,
+		ACTIVE: 3
 	};
 
 	var colors = [
@@ -40,8 +40,9 @@
 
 			this.gamecanvas = document.getElementById('blinkspiel');
 			this.renderer = new THREE.WebGLRenderer({canvas: this.gamecanvas});
-
+			this.renderer.setViewport(0, 0,WIDTH, HEIGHT);
 			this.renderer.setSize(WIDTH, HEIGHT);
+
 			this.renderer.shadowMap.enabled = true;
 			this.renderer.shadowMapSoft = true;
 			this.renderer.setClearColor(0x402020, 1);
@@ -67,7 +68,7 @@
       // path generation
 			this.currentPath = [];
 			var checkOldPos = function(pos) {
-				for (var pathPos of Blinkspiel.currentPath) {
+				for (var pathPos in Blinkspiel.currentPath) {
 					if (pathPos.position.x == pos.x && pathPos.position.y == pos.y) {
 						return true;
 					}
@@ -135,14 +136,14 @@
 
 					var tileMaterial = new THREE.MeshPhongMaterial({color: 0x00ff00, side: THREE.DoubleSide});		
 					var mesh = new THREE.Mesh(tileGeometry, tileMaterial);
-          mesh.receiveShadow = true;
+          			mesh.receiveShadow = true;
 					mesh.position.set((x * 12) - centeroffset,0, (y * 12) - centeroffset);
 
 
 					var color = colors[Math.floor(Math.random() * (colors.length))].clone();					
 					var state = tileStates.INACTIVE;
 					// schauen obs, im pfad ist
-					for (var pathPos of this.currentPath) {
+					for (var pathPos in this.currentPath) {
 						if (pathPos.position.x == x && pathPos.position.y == y) {
 							color = pathPos.color.clone();
 							//state = tileStates.ACTIVE;
@@ -330,7 +331,7 @@
 
 
 			// nun die tilestates ändern
-			for (var tile of this.tiles) {
+			for (var tile in this.tiles) {
 				if (tile.state == tileStates.SELECTABLE) {
 				  if (tile.state != tileStates.ACTIVE) {
 					  tile.state = tileStates.INACTIVE;
@@ -350,7 +351,7 @@
 
 		},
 		updateTileStates: function() {
-			for (var tile of this.tiles) {
+			for (var tile in this.tiles) {
 				switch (tile.state) {
 					case tileStates.SELECTABLE:
 						
@@ -404,10 +405,15 @@
 			console.log(e);
 		},
 		onWindowResize: function() {
-			 this.camera.aspect = window.innerWidth / window.innerHeight;
+			this.gamecanvas.width = window.innerWidth;
+			this.gamecanvas.height = window.innerHeight;
+			this.camera.aspect = window.innerWidth / window.innerHeight;
+			this.renderer.setViewport(0, 0, this.gamecanvas.clientWidth, this.gamecanvas.clientHeight);
+			this.renderer.setSize( window.innerWidth, window.innerHeight );
+			this.effectComposer.setSize( window.innerWidth, window.innerHeight );
 	    	this.camera.updateProjectionMatrix();
 
-	    	this.renderer.setSize( window.innerWidth, window.innerHeight );
+
 		},
 		onMouseMove: function(e) {
 			that = Blinkspiel;
@@ -440,7 +446,7 @@
 
 		},
 		onDevicesEnumerated: function(devices) {
-			for (var device of devices) {
+			for (var device in devices) {
       			Blinkspiel.onDeviceAdded(device);
 		    }
 		},
@@ -540,7 +546,7 @@
 			}			
 		},
 		fallingBlocks: function() {
-			for (var tile of this.tiles) {
+			for (var tile in this.tiles) {
 				if (tile.state != tileStates.ACTIVE && tile.mesh.position.y > -100) {
 
 					tile.mesh.position.y-= Math.random();
