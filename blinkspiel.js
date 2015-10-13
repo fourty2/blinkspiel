@@ -18,7 +18,10 @@
         new THREE.Color(1, 0, 0),
         new THREE.Color(0, 1, 0),
         new THREE.Color(0, 0, 1),
-        new THREE.Color(1, 1, 0)
+        new THREE.Color(1, 1, 0),
+        new THREE.Color(1, 0, 1),
+        new THREE.Color(0, 1, 1),
+        new THREE.Color(1, 1, 1)
     ];
 
     var Blinkspiel = {
@@ -60,7 +63,12 @@
             this.scene.add(this.camera);
 
 
-            // matrix von 5x5 planes erstellen
+            this.player = new THREE.Mesh(
+                new THREE.SphereGeometry(4, 8, 8),
+                new THREE.MeshPhongMaterial({color: 0x00ff00, shading: THREE.FlatShading})
+            );
+            this.player.castShadow = true;
+            this.scene.add(this.player);
 
 
             this.buildLevel(this.currentStage);
@@ -84,10 +92,8 @@
 
 
             var geometry = new THREE.SphereGeometry(200, 32, 32)
-            // create the material, using a texture of startfield
             var material = new THREE.MeshLambertMaterial({color: 0x100101})
             material.side = THREE.BackSide
-            // create the mesh based on geometry and material
             var mesh = new THREE.Mesh(geometry, material)
             this.scene.add(mesh);
 
@@ -120,6 +126,9 @@
                     }
                 ),
                 new THREE.MeshLambertMaterial({color: 0x336699})
+
+
+
             );
 
             this.menuLine.position.set(-38, 15, -25);
@@ -130,16 +139,6 @@
 
 
 
-            this.player = new THREE.Mesh(
-                new THREE.SphereGeometry(4, 8, 8),
-                new THREE.MeshPhongMaterial({color: 0x00ff00, shading: THREE.FlatShading})
-            );
-            this.player.castShadow = true;
-            this.playerPosition.x = 2;
-            this.playerPosition.y = 2;
-            this.movePlayer();
-
-            this.scene.add(this.player);
 
             this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -184,7 +183,14 @@
             color.b = 0.4 * color.b;
             return color;
         },
+        updatePoints: function() {
+            var points = document.getElementById('points');
+            points.innerHTML = "Level: " + this.currentStage + " - Punkte: 0";
+        },
         buildLevel: function (stage) {
+
+
+            this.updatePoints();
 
             var checkOldPos = function (pos) {
                 for (var pathPos of  Blinkspiel.currentPath)
@@ -202,19 +208,15 @@
             var centeroffset = numSpread * 5;
 
             var pathLength = 3 + stage;
-            var numColors = Math.floor(3 + (stage / 3));
+            var numColors = Math.floor(2 + (stage / 3));
 
             // alle tiles löschen
             for (var tile of this.tiles)
             {
                 this.scene.remove(tile.mesh);
             }
-            this.tiles = [];
-
 
             // pfad neu generieren
-
-            // path generation
             this.tiles = [];
             this.currentPath = [];
 
@@ -332,13 +334,23 @@
 
 
             this.scene.add(this.destination);
+
+            // let player start on center
+            this.playerPosition.x = 2;
+            this.playerPosition.y = 2;
+            this.currentPlayerPath = 0;
+            this.movePlayer();
+
         },
         movePlayer: function () {
             // müsste man hnochmal ausrechnen
             var centeroffset = 25;
             this.player.position.set((this.playerPosition.x * 12) - centeroffset, 5, (this.playerPosition.y * 12) - centeroffset);
 
-
+            console.log("move player");
+            console.log (this.currentPath);
+            console.log(this.currentPlayerPath);
+            console.log("x: " + this.playerPosition.x + " - y: " + this.playerPosition.y);
             if (this.currentPath[this.currentPlayerPath].position.x == this.playerPosition.x &&
                 this.currentPath[this.currentPlayerPath].position.y == this.playerPosition.y
             ) {
@@ -348,45 +360,59 @@
                 } else {
                     console.log("richtig!");
                 }
+
+                this.currentPlayerPath++;
+
+
+                // nun die tilestates ändern
+                for (var tile of this.tiles)
+                {
+                    if (tile.state == tileStates.SELECTABLE) {
+                        if (tile.state != tileStates.ACTIVE) {
+                            tile.state = tileStates.INACTIVE;
+                        }
+                    }
+                }
+
+                var x = this.playerPosition.x;
+                var y = this.playerPosition.y;
+
+                console.log(this.tiles.length - 1);
+                console.log("x selectable");
+                console.log(((x + 1) * 5) + y);
+
+                if (x < 4 && this.tiles[((x + 1) * 5) + y].state != tileStates.ACTIVE) {
+                    this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE;
+                }
+                console.log("x selectable2");
+                console.log(((x - 1) * 5) + y);
+
+                if (x > 0 && this.tiles[((x - 1) * 5) + y].state != tileStates.ACTIVE) {
+                    this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE;
+                }
+                console.log("y selectable");
+                console.log((x * 5) + y + 1);
+
+                if (y < 4 && this.tiles[(x * 5) + y + 1].state != tileStates.ACTIVE) {
+                    this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE;
+                }
+                console.log("y selectable2");
+                console.log((x * 5) + y - 1);
+
+                if (y > 0 && this.tiles[(x * 5) + y - 1].state != tileStates.ACTIVE) {
+                    this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE;
+                }
+
+                this.updateTileStates();
+
+
             } else {
                 console.log(this.currentPath[this.currentPlayerPath]);
                 console.log(this.playerPosition);
                 this.setGameState(gameStates.LOST);
             }
 
-            this.currentPlayerPath++;
 
-
-            // nun die tilestates ändern
-            for (var tile of this.tiles)
-            {
-                if (tile.state == tileStates.SELECTABLE) {
-                    if (tile.state != tileStates.ACTIVE) {
-                        tile.state = tileStates.INACTIVE;
-                    }
-                }
-            }
-
-            var x = this.playerPosition.x;
-            var y = this.playerPosition.y;
-
-            console.log(this.tiles.length - 1);
-            if (x < 5 && this.tiles[((x + 1) * 5) + y].state != tileStates.ACTIVE) {
-                this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE;
-            }
-            if (x > 0 && this.tiles[((x - 1) * 5) + y].state != tileStates.ACTIVE) {
-                this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE;
-            }
-            if (y < 5 && this.tiles[(x * 5) + y + 1].state != tileStates.ACTIVE) {
-                console.log((x * 5) + y + 1);
-                this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE;
-            }
-            if (y > 0 && this.tiles[(x * 5) + y - 1].state != tileStates.ACTIVE) {
-                console.log((x * 5) + y - 1);
-                this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE;
-            }
-
-            this.updateTileStates();
 
         },
         updateTileStates: function () {
@@ -432,6 +458,7 @@
                     tile.state = tileStates.SELECTED;
                     that.playerPosition.x = tile.x;
                     that.playerPosition.y = tile.y;
+                    console.log("call to moveplayer von mouseclick");
                     that.movePlayer();
                     //bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
                     //console.log(intersects[i].object.tileIndex);
@@ -550,17 +577,20 @@
                     break;
                 case gameStates.PLAYING:
                     console.log("nun gehts los");
+                    bg.blink1.fadeRgb(0, 0, 0, 250, 0);
 
                     break;
                 case gameStates.LOST:
 
                     var lost = document.getElementById('lost');
                     lost.style.display = 'block';
+                    bg.blink1.fadeRgb(0, 0, 0, 250, 0);
 
                     break;
                 case gameStates.STAGECLEARED:
                     var stageCleared = document.getElementById('stageCleared');
                     stageCleared.style.display = 'block';
+                    bg.blink1.fadeRgb(0, 0, 0, 250, 0);
 
                     // init game
                     this.player.position.y = 5;

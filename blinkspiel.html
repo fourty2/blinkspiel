@@ -30,7 +30,7 @@
 				margin: 0 auto;
 				font-weight: lighter;
 				color: #f0f0f0;
-				font-size: 3em;
+				font-size: 2.5em;
 				display: none;
 			}
 			#lost {
@@ -83,6 +83,15 @@
     			display: none;
 			}
 
+			#points {
+				font-size: 3em;
+				position: absolute;
+				top: 0px;
+				width: 100%;
+				color: #ffffff;
+				text-align:center;
+			}
+
 		</style>
 	</head>
 	<body>
@@ -94,14 +103,17 @@
 		<div id="info">made with &hearts; by @snooze82 - für den eSailors blink(1) contest</div>
 		<div id="startGame">
 
-		Achte auf die Farbreihenfolge des Blink(1) und folge dem Weg zum Schatz.<br />
-		Viel Erfolg!<br />
+		Achte auf die Farbreihenfolge des Blink(1) <br />und folge dem Weg zum Schatz.<br />
+		<br />
 
 		<button id="startButton">Start</button>
 		</div>
 		<div id="stageCleared">
 			Gut gemacht! Weiter geht's!<br />
 			<button id="nextButton">Los! Los!</button>
+		</div>
+		<div id="points">
+			Level: 0 - Punkte: 0
 		</div>
 
 
@@ -117,6 +129,7 @@
 		<script src="RenderPass.js"></script>
 		<script src="BloomPass.js"></script>		
 		<script src="LobsterLove_Medium.js"></script>
+		<script src="optimer_regular.typeface.js"></script>
 
 		<script src="blinkspiel.js"></script>
 	</body>
