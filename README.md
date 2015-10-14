@@ -7,22 +7,9 @@ Zeit für ein Spiel. Zeit für das BLINKSPIEL :)
 Einsendung zum eSailors blink(1) Contest
 
 # Todos
-- Levelgenerierung kapseln
-- Steigerung der Schwierigkeit implementieren (mehr Farben, mehr Felder, längere Pfade)
-- 128px Icon basteln
 - Punkte/ Zeitbonus einführen
 - Kamera zoom beim Spielen
 - ggf. Online-Toplist
 - Figur und Animation modellieren
-- Code aufräumen
-
-# Bugs
-- SELECTABLE felder werden teilweise nicht richtig berechnet
-
-
-
-rgbr
-
-
 
 

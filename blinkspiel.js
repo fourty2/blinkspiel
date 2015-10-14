@@ -21,7 +21,11 @@
         new THREE.Color(1, 1, 0),
         new THREE.Color(1, 0, 1),
         new THREE.Color(0, 1, 1),
-        new THREE.Color(1, 1, 1)
+        new THREE.Color(1, 1, 1),
+      	new THREE.Color(1, 0.5, 0),
+      	new THREE.Color(0.3, 0.7, 1),
+        
+          
     ];
 
     var Blinkspiel = {
@@ -185,14 +189,14 @@
         },
         updatePoints: function() {
             var points = document.getElementById('points');
-            points.innerHTML = "Level: " + this.currentStage + " - Punkte: 0";
+            points.innerHTML = "Level: " + this.currentStage + "";
         },
         buildLevel: function (stage) {
 
 
             this.updatePoints();
 
-            var checkOldPos = function (pos) {
+            var checkOldPos = function (pos) { 
                 for (var pathPos of  Blinkspiel.currentPath)
                 {
                     if (pathPos.position.x == pos.x && pathPos.position.y == pos.y) {
@@ -208,13 +212,14 @@
             var centeroffset = numSpread * 5;
 
             var pathLength = 3 + stage;
-            var numColors = Math.floor(2 + (stage / 3));
-
+            var numColors = Math.floor(2 + (stage / 2));
+            console.log("numColors" + numColors);
             // alle tiles löschen
             for (var tile of this.tiles)
             {
                 this.scene.remove(tile.mesh);
             }
+
 
             // pfad neu generieren
             this.tiles = [];
@@ -228,7 +233,7 @@
 
 
             var possiblePos = new THREE.Vector2();
-            console.log("generating path");
+            
             for (var i = 0; i < pathLength; i++) {
                 var iterations = 0;
                 do {
@@ -264,9 +269,10 @@
 
                 currentPos = possiblePos.clone();
 
+                // hier zwei farben mehr für den pfad. verhindert überschneidungen
                 this.currentPath.push({
                     'position': currentPos.clone(),
-                    'color': colors[Math.floor(Math.random() * (colors.length))].clone()
+                    'color': colors[Math.floor(1 + (Math.random() * (numColors +1 )))].clone()
                 });
             }
 
@@ -316,7 +322,7 @@
 
             // auf den letzten pfad dann noch das ziel setzen
             var lastPathItem = this.currentPath[this.currentPath.length - 1];
-            console.log(lastPathItem);
+            
 
             if (this.destination) {
                 this.scene.remove(this.destination);
@@ -346,22 +352,24 @@
             // müsste man hnochmal ausrechnen
             var centeroffset = 25;
             this.player.position.set((this.playerPosition.x * 12) - centeroffset, 5, (this.playerPosition.y * 12) - centeroffset);
+            console.log("currentPlayerPath " + this.currentPlayerPath.toString());
+            console.log("currentpath x " + this.currentPath[this.currentPlayerPath].position.x.toString() + " y "
+            		+ this.currentPath[this.currentPlayerPath].position.y.toString() + " - playerposition x " + this.playerPosition.x.toString()
+            		+ " y " + this.playerPosition.y.toString() + " x equal"
+            	);
 
-            console.log("move player");
-            console.log (this.currentPath);
-            console.log(this.currentPlayerPath);
-            console.log("x: " + this.playerPosition.x + " - y: " + this.playerPosition.y);
             if (this.currentPath[this.currentPlayerPath].position.x == this.playerPosition.x &&
                 this.currentPath[this.currentPlayerPath].position.y == this.playerPosition.y
             ) {
 
-                if (this.currentPlayerPath == this.currentPath.length - 1) {
+                if (this.currentPlayerPath == (this.currentPath.length - 1)) {
                     this.setGameState(gameStates.STAGECLEARED);
                 } else {
                     console.log("richtig!");
+
+                	this.currentPlayerPath = this.currentPlayerPath + 1;
                 }
 
-                this.currentPlayerPath++;
 
 
                 // nun die tilestates ändern
@@ -377,27 +385,18 @@
                 var x = this.playerPosition.x;
                 var y = this.playerPosition.y;
 
-                console.log(this.tiles.length - 1);
-                console.log("x selectable");
-                console.log(((x + 1) * 5) + y);
 
                 if (x < 4 && this.tiles[((x + 1) * 5) + y].state != tileStates.ACTIVE) {
                     this.tiles[((x + 1) * 5) + y].state = tileStates.SELECTABLE;
                 }
-                console.log("x selectable2");
-                console.log(((x - 1) * 5) + y);
 
                 if (x > 0 && this.tiles[((x - 1) * 5) + y].state != tileStates.ACTIVE) {
                     this.tiles[((x - 1) * 5) + y].state = tileStates.SELECTABLE;
                 }
-                console.log("y selectable");
-                console.log((x * 5) + y + 1);
 
                 if (y < 4 && this.tiles[(x * 5) + y + 1].state != tileStates.ACTIVE) {
                     this.tiles[(x * 5) + y + 1].state = tileStates.SELECTABLE;
                 }
-                console.log("y selectable2");
-                console.log((x * 5) + y - 1);
 
                 if (y > 0 && this.tiles[(x * 5) + y - 1].state != tileStates.ACTIVE) {
                     this.tiles[(x * 5) + y - 1].state = tileStates.SELECTABLE;
@@ -407,8 +406,6 @@
 
 
             } else {
-                console.log(this.currentPath[this.currentPlayerPath]);
-                console.log(this.playerPosition);
                 this.setGameState(gameStates.LOST);
             }
 
@@ -458,14 +455,14 @@
                     tile.state = tileStates.SELECTED;
                     that.playerPosition.x = tile.x;
                     that.playerPosition.y = tile.y;
-                    console.log("call to moveplayer von mouseclick");
                     that.movePlayer();
                     //bg.blink1.fadeRgb(tile.color.r * 255, tile.color.g * 255, tile.color.b * 255, 0, 0);
                     //console.log(intersects[i].object.tileIndex);
                 }
-
-                intersects[i].object.material.color.set(tile.color);
-                intersects[i].object.scale.y = 2;
+                if (tile) {
+	                intersects[i].object.material.color.set(tile.color);
+	                intersects[i].object.scale.y = 2;
+                }
             }
         },
         onWindowResize: function () {
@@ -541,7 +538,7 @@
             console.log(device);
         },
         setGameState: function (state) {
-            console.log("setting game state");
+            
             this.gameState = state;
             switch (this.gameState) {
                 case gameStates.WAITINGFORDEVICE:
@@ -564,7 +561,7 @@
 
                     break;
                 case gameStates.PLAYPATTERN:
-                    console.log("play");
+                    
                     var startGame = document.getElementById('startGame');
                     startGame.style.display = 'none';
 
@@ -573,10 +570,10 @@
 
 
                     this.patternTime = new Date();
-                    this.currentDelta = -1;
+                    this.currentDelta = -1;                    
                     break;
                 case gameStates.PLAYING:
-                    console.log("nun gehts los");
+                    
                     bg.blink1.fadeRgb(0, 0, 0, 250, 0);
 
                     break;
